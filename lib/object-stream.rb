@@ -94,7 +94,9 @@ module ObjectStream
     
     attr_accessor :chunk_size
 
-    def initialize io, chunk_size: 2000
+    DEFAULT_CHUNK_SIZE = 2000
+
+    def initialize io, chunk_size: DEFAULT_CHUNK_SIZE
       super
       @parser = Yajl::Parser.new
       @encoder = Yajl::Encoder.new
@@ -125,7 +127,9 @@ module ObjectStream
     
     attr_accessor :chunk_size
 
-    def initialize io, chunk_size: 2000
+    DEFAULT_CHUNK_SIZE = 2000
+
+    def initialize io, chunk_size: DEFAULT_CHUNK_SIZE
       super
       @unpacker = MessagePack::Unpacker.new
         # don't specify io, so don't have to read all of io in one loop
