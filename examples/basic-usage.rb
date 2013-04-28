@@ -13,37 +13,10 @@ begin
 
   type = ARGV.shift.intern
   
-  class A
-    def initialize x, y
-      @x, @y = x, y
-    end
-    
-    def to_msgpack pk = nil
-      case pk
-      when MessagePack::Packer
-        pk.write_array_header(2)
-        pk.write @x
-        pk.write @y
-        return pk
-      
-      else # nil or IO
-        MessagePack.pack(self, pk)
-      end
-    end
-    
-    def to_json
-      [@x, @y].to_json
-    end
-    
-    def self.from_serialized ary
-      new *ary
-    end
-  end
-
   File.open(dumpfile, "w") do |f|
     stream = ObjectStream.new(f, type: type)
     p stream
-    stream << "foo" << [:bar, 42] << {"String" => "string"} << "A" << A.new(3,6)
+    stream << "foo" << [:bar, 42] << {"String" => "string"}
   end
   
   data = File.read(dumpfile)
@@ -60,7 +33,6 @@ begin
     stream = ObjectStream.new(f, type: type)
     stream.map do |obj|
       #p obj
-      stream.expect {obj == "A" and A}
       obj
     end
   end
