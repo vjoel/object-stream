@@ -1,3 +1,9 @@
+case ARGV[0]
+when "marshal", "yaml", "json", "msgpack"
+else
+  abort "Usage: #$0 marshal|yaml|json|msgpack"
+end
+
 require 'object-stream'
 require 'socket'
 require 'tmpdir'
@@ -7,7 +13,7 @@ begin
   @path = File.join(@dir, "sock")
   @dumpfile = File.join(@dir, "dump")
   @logfile = File.join(@dir, "log")
-  
+
   type = ARGV.shift.intern
   
   class A
