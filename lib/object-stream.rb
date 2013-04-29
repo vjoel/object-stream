@@ -67,6 +67,10 @@ module ObjectStream
     io.close
   end
   
+  def closed?
+    io.closed?
+  end
+  
   # Makes it possible to use stream in a select.
   def to_io
     io
