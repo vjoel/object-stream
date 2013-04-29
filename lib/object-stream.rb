@@ -10,6 +10,9 @@ module ObjectStream
   JSON_TYPE     = :json
   MSGPACK_TYPE  = :msgpack
   
+  # Raised when maxbuf exceeded.
+  class OverflowError < StandardError; end
+
   class << self
     def new io, type: MARSHAL_TYPE, **opts
       cl = stream_class_for(type)
@@ -120,7 +123,9 @@ module ObjectStream
       @chunk_size = chunk_size
     end
 
-    # class cl should define #to_json and cl.from_serialized
+    # class cl should define #to_json and cl.from_serialized; the block form
+    # has the same effect, but avoids executing the code in the block in the
+    # case when expect is a no-op (marshal and yaml).
     def expect cl = yield
       @expected_class = cl
     end
@@ -143,25 +148,31 @@ module ObjectStream
     include ObjectStream
     
     attr_accessor :chunk_size
+    attr_accessor :maxbuf
 
     DEFAULT_CHUNK_SIZE = 2000
-
-    def initialize io, chunk_size: DEFAULT_CHUNK_SIZE
+    DEFAULT_MAXBUF = 4000
+    
+    def initialize io, chunk_size: DEFAULT_CHUNK_SIZE, maxbuf: DEFAULT_MAXBUF
       super
       @unpacker = MessagePack::Unpacker.new
         # don't specify io, so don't have to read all of io in one loop
       
       @packer = MessagePack::Packer.new(io)
       @chunk_size = chunk_size
+      @maxbuf = maxbuf
     end
 
-    # class cl should define #to_msgpack and cl.from_serialized
+    # class cl should define #to_msgpack and cl.from_serialized; the block form
+    # has the same effect, but avoids executing the code in the block in the
+    # case when expect is a no-op (marshal and yaml).
     def expect cl = yield
       @expected_class = cl
     end
     
     def read
       fill_buffer(chunk_size)
+      checkbuf if maxbuf
       read_from_buffer do |obj|
         yield obj
       end
@@ -174,6 +185,13 @@ module ObjectStream
     def read_from_buffer
       @unpacker.each do |obj|
         yield @expected_class ? @expected_class.from_serialized(obj) : obj
+      end
+    end
+    
+    def checkbuf
+      if maxbuf and @unpacker.buffer.size > maxbuf
+        raise OverflowError,
+          "Exceeded buffer limit by #{@unpacker.buffer.size - maxbuf} bytes."
       end
     end
     
