@@ -5,12 +5,10 @@ else
 end
 
 require 'object-stream'
-require 'tmpdir'
 require 'socket'
 
 begin
   type = ARGV.shift.intern
-  dir = Dir.mktmpdir "stream-"
 
   s, t = UNIXSocket.pair
 
@@ -18,14 +16,8 @@ begin
     stream = ObjectStream.new(s, type: type)
     10.times do |i|
       stream << i
-      if i == 5
-        puts "simulating a slow sender"
-        sleep 2
-        puts "sender is continuing"
-      end
     end
   end
-
 
   s.close
   stream = ObjectStream.new(t, type: type)
@@ -47,6 +39,5 @@ begin
   stream.close
 
 ensure
-  FileUtils.remove_entry dir
   Process.wait pid if pid
 end
