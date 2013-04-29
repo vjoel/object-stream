@@ -61,6 +61,8 @@ begin
     stream.map do |obj|
       #p obj
       stream.expect {obj == "A" and A}
+        # code inside block won't be executed in ases where object class
+        # is passed in the data itself (marshal, yaml)
       obj
     end
   end
