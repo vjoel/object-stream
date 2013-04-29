@@ -15,7 +15,7 @@ begin
   pid = fork do
     stream = ObjectStream.new(s, type: type)
     10.times do |i|
-      stream << i
+      stream << [i] # box the int because json needs it
     end
   end
 
