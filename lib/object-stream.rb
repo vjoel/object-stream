@@ -59,6 +59,19 @@ module ObjectStream
     end
   end
   
+  def eof?
+    io.eof?
+  end
+  
+  def close
+    io.close
+  end
+  
+  # Makes it possible to use stream in a select.
+  def to_io
+    io
+  end
+  
   class MarshalStream
     include ObjectStream
     
