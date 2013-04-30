@@ -55,6 +55,7 @@ module ObjectStream
   def write object; end
 
   def each
+    return to_enum unless block_given?
     until io.eof?
       read do |obj|
         yield obj

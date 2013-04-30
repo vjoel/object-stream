@@ -80,6 +80,17 @@ module TestBasic
     assert_equal(objects, stream.to_a, # <-- #each called by #to_a
       "dump is #{dump.inspect}")
   end
+
+  def test_enum
+    objects.each do |obj|
+      stream.write obj
+    end
+
+    sio.rewind
+
+    enum = stream.each
+    assert_equal(objects, enum.to_a)
+  end
 end
 
 class TestBasicMarshal < MiniTest::Unit::TestCase
