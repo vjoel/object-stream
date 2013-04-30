@@ -9,7 +9,6 @@ require 'object-stream'
 begin
   type = ARGV.shift.intern
 
-  
   rd, wr = IO.pipe
 
   pid = fork do
