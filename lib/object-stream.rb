@@ -45,17 +45,43 @@ module ObjectStream
   
   def initialize io, **opts
     @io = io
+    @object_buffer = []
     unexpect
   end
   
   def expect cl = nil; end
   def unexpect; expect nil; end
   
-  def read; end
+  def read
+    if not @object_buffer.empty?
+      return @object_buffer.shift
+    end
+    
+    have_result = false
+    result = nil
+    until have_result
+      read do |obj| # might not read enough bytes to yield an obj
+        if have_result
+          @object_buffer << obj
+        else
+          have_result = true
+          result = obj
+        end
+      end
+    end
+    result
+  end
+  
   def write object; end
 
   def each
     return to_enum unless block_given?
+    
+    @object_buffer.each do |obj|
+      yield obj
+    end
+    @object_buffer = []
+    
     until io.eof?
       read do |obj|
         yield obj
@@ -64,7 +90,7 @@ module ObjectStream
   end
   
   def eof?
-    io.eof?
+    @object_buffer.empty? && io.eof?
   end
   
   def close
@@ -84,7 +110,12 @@ module ObjectStream
     include ObjectStream
     
     def read
-      yield Marshal.load(io)
+      val = Marshal.load(io)
+      if block_given?
+        yield val
+      else
+        return val
+      end
     end
     
     def write object
@@ -98,6 +129,10 @@ module ObjectStream
     include ObjectStream
     
     def read
+      unless block_given?
+        raise "YamlStream does not support read without a block."
+      end
+      
       YAML.load_stream(io) do |obj|
         yield obj
       end
@@ -132,6 +167,8 @@ module ObjectStream
     end
     
     def read
+      return super unless block_given?
+
       @parser.on_parse_complete = proc do |obj|
         yield @expected_class ? @expected_class.from_serialized(obj) : obj
       end
@@ -172,6 +209,8 @@ module ObjectStream
     end
     
     def read
+      return super unless block_given?
+      
       fill_buffer(chunk_size)
       checkbuf if maxbuf
       read_from_buffer do |obj|

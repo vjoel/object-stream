@@ -91,6 +91,25 @@ module TestBasic
     enum = stream.each
     assert_equal(objects, enum.to_a)
   end
+  
+  def test_read_without_block
+    return if type == ObjectStream::YAML_TYPE
+
+    n = 100
+    n.times do |i|
+      stream << [i]
+    end
+
+    stream.io.rewind
+
+    count = 0
+    until stream.eof?
+      obj = stream.read
+      assert_equal [count], obj
+      count += 1
+    end
+    assert_equal n, count
+  end
 end
 
 class TestBasicMarshal < MiniTest::Unit::TestCase
