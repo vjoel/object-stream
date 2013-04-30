@@ -210,5 +210,13 @@ module ObjectStream
       @packer.flush
       self
     end
+
+    # Call this if the most recent write was a #write_to_buffer without
+    # a #flush_buffer. If you only use #write, there's no need to close
+    # the stream in any special way.
+    def close
+      flush_buffer
+      super
+    end
   end
 end
