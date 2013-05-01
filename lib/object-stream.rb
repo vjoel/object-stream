@@ -15,6 +15,10 @@ module ObjectStream
 
   class << self
     def new io, type: MARSHAL_TYPE, **opts
+      if io.kind_of? ObjectStream
+        raise ArgumentError,
+          "given io is already an ObjectStream: #{io.inspect}"
+      end
       cl = stream_class_for(type)
       cl.new io, **opts
     end
