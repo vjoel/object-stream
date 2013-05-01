@@ -56,7 +56,7 @@ module ObjectStream
   
   def read
     if block_given?
-      read_from_buffer {|obj| yield obj}
+      read_from_object_buffer {|obj| yield obj}
       read_from_stream {|obj| yield obj}
       return nil
     else
@@ -85,7 +85,7 @@ module ObjectStream
     result
   end
 
-  def read_from_buffer
+  def read_from_object_buffer
     if @object_buffer and not @object_buffer.empty?
       @object_buffer.each {|obj| yield obj}
       @object_buffer = nil
