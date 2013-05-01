@@ -61,6 +61,12 @@ module ObjectStream
       return @object_buffer.shift
     end
     
+    if block_given?
+      return read_from_stream do |obj|
+        yield obj
+      end
+    end
+
     have_result = false
     result = nil
     until have_result
@@ -115,13 +121,8 @@ module ObjectStream
   class MarshalStream
     include ObjectStream
     
-    def read
-      val = Marshal.load(io)
-      if block_given?
-        yield val
-      else
-        return val
-      end
+    def read_from_stream
+      yield Marshal.load(io)
     end
     
     def write object
@@ -134,11 +135,14 @@ module ObjectStream
   class YamlStream
     include ObjectStream
     
-    def read
+    def read(*)
       unless block_given?
         raise "YamlStream does not support read without a block."
       end
+      super
+    end
       
+    def read_from_stream
       YAML.load_stream(io) do |obj|
         yield obj
       end
@@ -172,9 +176,7 @@ module ObjectStream
       @expected_class = cl
     end
     
-    def read
-      return super unless block_given?
-
+    def read_from_stream
       @parser.on_parse_complete = proc do |obj|
         yield @expected_class ? @expected_class.from_serialized(obj) : obj
       end
@@ -214,9 +216,7 @@ module ObjectStream
       @expected_class = cl
     end
     
-    def read
-      return super unless block_given?
-      
+    def read_from_stream
       fill_buffer(chunk_size)
       checkbuf if maxbuf
       read_from_buffer do |obj|
