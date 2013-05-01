@@ -54,6 +54,7 @@ module ObjectStream
   def expect cl = nil; end
   def unexpect; expect nil; end
   
+  # raises EOFError
   def read
     if block_given?
       read_from_object_buffer {|obj| yield obj}
@@ -94,9 +95,11 @@ module ObjectStream
   
   def write object; end
 
+  # does not raise EOFError
   def each
     return to_enum unless block_given?
     read {|obj| yield obj} until eof
+  rescue EOFError
   end
   
   def eof?
