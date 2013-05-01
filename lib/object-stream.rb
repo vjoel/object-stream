@@ -57,16 +57,21 @@ module ObjectStream
   def unexpect; expect nil; end
   
   def read
+    if block_given?
+      read_from_buffer {|obj| yield obj}
+      read_from_stream {|obj| yield obj}
+      return nil
+    else
+      read_one
+    end
+  end
+
+  # read and return exactly one; blocking
+  def read_one
     if @object_buffer and not @object_buffer.empty?
       return @object_buffer.shift
     end
     
-    if block_given?
-      return read_from_stream do |obj|
-        yield obj
-      end
-    end
-
     have_result = false
     result = nil
     until have_result
@@ -81,29 +86,25 @@ module ObjectStream
     end
     result
   end
+
+  def read_from_buffer
+    if @object_buffer and not @object_buffer.empty?
+      @object_buffer.each {|obj| yield obj}
+      @object_buffer = nil
+    end
+  end
   
   def write object; end
 
   def each
     return to_enum unless block_given?
-    
-    if @object_buffer and not @object_buffer.empty?
-      @object_buffer.each do |obj|
-        yield obj
-      end
-      @object_buffer = nil
-    end
-    
-    until io.eof?
-      read do |obj|
-        yield obj
-      end
-    end
+    read {|obj| yield obj} until eof
   end
   
   def eof?
     (!@object_buffer || @object_buffer.empty?) && io.eof?
   end
+  alias eof eof?
   
   def close
     io.close
