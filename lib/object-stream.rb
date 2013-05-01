@@ -49,7 +49,7 @@ module ObjectStream
   
   def initialize io, **opts
     @io = io
-    @object_buffer = []
+    @object_buffer = nil
     unexpect
   end
   
@@ -57,7 +57,7 @@ module ObjectStream
   def unexpect; expect nil; end
   
   def read
-    if not @object_buffer.empty?
+    if @object_buffer and not @object_buffer.empty?
       return @object_buffer.shift
     end
     
@@ -66,7 +66,7 @@ module ObjectStream
     until have_result
       read do |obj| # might not read enough bytes to yield an obj
         if have_result
-          @object_buffer << obj
+          (@object_buffer||=[]) << obj
         else
           have_result = true
           result = obj
@@ -81,10 +81,12 @@ module ObjectStream
   def each
     return to_enum unless block_given?
     
-    @object_buffer.each do |obj|
-      yield obj
+    if @object_buffer and not @object_buffer.empty?
+      @object_buffer.each do |obj|
+        yield obj
+      end
+      @object_buffer = nil
     end
-    @object_buffer = []
     
     until io.eof?
       read do |obj|
@@ -94,7 +96,7 @@ module ObjectStream
   end
   
   def eof?
-    @object_buffer.empty? && io.eof?
+    (!@object_buffer || @object_buffer.empty?) && io.eof?
   end
   
   def close
