@@ -13,37 +13,29 @@ module ObjectStream
   # Raised when maxbuf exceeded.
   class OverflowError < StandardError; end
 
+  @stream_class_map =
+    Hash.new {raise ArgumentError, "unknown type: #{type.inspect}"}
+
   class << self
     def new io, type: MARSHAL_TYPE, **opts
       if io.kind_of? ObjectStream
         raise ArgumentError,
           "given io is already an ObjectStream: #{io.inspect}"
       end
-      cl = stream_class_for(type)
-      cl.new io, **opts
+      stream_class_for(type).new io, **opts
     end
 
     def stream_class_for type
-      @stream_class_for ||= {}
-      @stream_class_for[type] ||=
-        begin
-          case type
-          when MARSHAL_TYPE
-            MarshalStream
-          when YAML_TYPE
-            require 'yaml'
-            YamlStream
-          when JSON_TYPE
-            require 'yajl'
-            require 'yajl/json_gem'
-            JsonStream
-          when MSGPACK_TYPE
-            require 'msgpack'
-            MsgpackStream
-          else
-            raise ArgumentError, "unknown type: #{type.inspect}"
-          end
-        end
+      cl = @stream_class_map[type]
+      if cl.respond_to? :new
+        cl
+      else
+        @stream_class_map[type] = cl.call
+      end
+    end
+    
+    def register_type type, &bl
+      @stream_class_map[type] = bl
     end
   end
   
@@ -52,6 +44,12 @@ module ObjectStream
     @object_buffer = nil
     unexpect
   end
+  
+#  def inspect
+#  end
+#  
+#  def to_s
+#  end
   
   def expect cl = nil; end
   def unexpect; expect nil; end
@@ -122,6 +120,10 @@ module ObjectStream
   class MarshalStream
     include ObjectStream
     
+    ObjectStream.register_type MARSHAL_TYPE do
+      self
+    end
+    
     def read_from_stream
       yield Marshal.load(io)
     end
@@ -135,6 +137,11 @@ module ObjectStream
   
   class YamlStream
     include ObjectStream
+    
+    ObjectStream.register_type YAML_TYPE do
+      require 'yaml'
+      self
+    end
     
     def read(*)
       unless block_given?
@@ -158,6 +165,12 @@ module ObjectStream
   
   class JsonStream
     include ObjectStream
+    
+    ObjectStream.register_type JSON_TYPE do
+      require 'yajl'
+      require 'yajl/json_gem'
+      self
+    end
     
     attr_accessor :chunk_size
 
@@ -193,6 +206,11 @@ module ObjectStream
 
   class MsgpackStream
     include ObjectStream
+    
+    ObjectStream.register_type MSGPACK_TYPE do
+      require 'msgpack'
+      self
+    end
     
     attr_accessor :chunk_size
     attr_accessor :maxbuf
