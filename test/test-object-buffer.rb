@@ -30,7 +30,8 @@ class TestObjectBuffer < MiniTest::Unit::TestCase
   end
   
   def do_test type
-    n = 100
+    n = 200
+    n_each = [n - 40, n/2].max
     
     th = Thread.new do
       src = ObjectStream.new(s, type: type)
@@ -52,6 +53,13 @@ class TestObjectBuffer < MiniTest::Unit::TestCase
         dst.read do |obj|
           assert_equal(i, obj[0])
           i+=1
+        end
+        
+        if i > n_each
+          dst.each do |obj|
+            assert_equal(i, obj[0])
+            i+=1
+          end
         end
       end
     rescue EOFError
