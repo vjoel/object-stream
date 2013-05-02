@@ -10,6 +10,8 @@ module ObjectStream
   JSON_TYPE     = :json
   MSGPACK_TYPE  = :msgpack
   
+  MAX_OUT_BUFFER = 10
+
   # Raised when maxbuf exceeded.
   class OverflowError < StandardError; end
 
@@ -49,6 +51,7 @@ module ObjectStream
   def initialize io, **opts
     @io = io
     @object_buffer = nil
+    @out_buffer = []
     unexpect
   end
   
@@ -100,7 +103,25 @@ module ObjectStream
     end
   end
   
-  def write object; end
+  def write object
+    write_to_buffer object
+    flush_buffer
+  end
+  alias << write
+
+  def write_to_buffer object
+    @out_buffer << object
+    flush_buffer if @out_buffer.size > MAX_OUT_BUFFER
+    self
+  end
+
+  def flush_buffer
+    @out_buffer.each do |object|
+      write_to_stream object
+    end
+    @out_buffer.clear
+    self
+  end
 
   # does not raise EOFError
   def each
@@ -113,8 +134,12 @@ module ObjectStream
     (!@object_buffer || @object_buffer.empty?) && io.eof?
   end
   alias eof eof?
-  
+
+  # Call this if the most recent write was a #write_to_buffer without
+  # a #flush_buffer. If you only use #write, there's no need to close
+  # the stream in any special way.
   def close
+    flush_buffer
     io.close
   end
   
@@ -142,11 +167,10 @@ module ObjectStream
       yield Marshal.load(io)
     end
     
-    def write object
+    def write_to_stream object
       Marshal.dump(object, io)
       self
     end
-    alias << write
   end
   
   class YamlStream
@@ -170,11 +194,10 @@ module ObjectStream
       end
     end
     
-    def write object
+    def write_to_stream object
       YAML.dump(object, io)
       self
     end
-    alias << write
   end
   
   class JsonStream
@@ -211,11 +234,10 @@ module ObjectStream
       @parser << io.readpartial(chunk_size)
     end
     
-    def write object
+    def write_to_stream object
       @encoder.encode object, io
       self
     end
-    alias << write
   end
 
   class MsgpackStream
@@ -274,11 +296,10 @@ module ObjectStream
       end
     end
     
-    def write object
+    def write_to_stream object
       @packer.write(object).flush
       self
     end
-    alias << write
     
     def write_to_buffer object
       @packer.write(object)
@@ -288,14 +309,6 @@ module ObjectStream
     def flush_buffer
       @packer.flush
       self
-    end
-
-    # Call this if the most recent write was a #write_to_buffer without
-    # a #flush_buffer. If you only use #write, there's no need to close
-    # the stream in any special way.
-    def close
-      flush_buffer
-      super
     end
   end
 end
