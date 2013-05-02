@@ -15,6 +15,7 @@ module ObjectStream
 
   @stream_class_map =
     Hash.new {raise ArgumentError, "unknown type: #{type.inspect}"}
+  @mutex = Mutex.new
 
   class << self
     def new io, type: MARSHAL_TYPE, **opts
@@ -30,7 +31,13 @@ module ObjectStream
       if cl.respond_to? :new
         cl
       else
-        @stream_class_map[type] = cl.call
+        @mutex.synchronize do ## seems like overkill
+          if cl.respond_to? :new
+            cl
+          else
+            @stream_class_map[type] = cl.call
+          end
+        end
       end
     end
     
