@@ -4,6 +4,7 @@ module ObjectStream
   include Enumerable
   
   attr_reader :io
+  attr_accessor :peer_name
   
   MARSHAL_TYPE  = :marshal
   YAML_TYPE     = :yaml
@@ -52,14 +53,13 @@ module ObjectStream
     @io = io
     @object_buffer = nil
     @out_buffer = []
+    @peer_name = "unknown"
     unexpect
   end
   
-#  def inspect
-#  end
-#  
-#  def to_s
-#  end
+  def to_s
+    "#<#{self.class} to #{peer_name}, io=#{io.inspect}>"
+  end
   
   def expect cl = nil; end
   def unexpect; expect nil; end
