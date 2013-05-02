@@ -280,7 +280,7 @@ module ObjectStream
     end
     alias << write
     
-    def write_to_buffer
+    def write_to_buffer object
       @packer.write(object)
       self
     end
