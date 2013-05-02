@@ -4,7 +4,7 @@ require 'stringio'
 require 'minitest/autorun'
 
 class TestExpect < MiniTest::Unit::TestCase
-  attr_reader :sio, :stream
+  attr_reader :sio
   
   class A
     def initialize x, y
