@@ -89,7 +89,7 @@ module ObjectStream
   def read_from_object_buffer
     if @object_buffer and not @object_buffer.empty?
       @object_buffer.each {|obj| yield obj}
-      @object_buffer = nil
+      @object_buffer.clear
     end
   end
   
