@@ -262,6 +262,7 @@ module ObjectStream
       @packer = MessagePack::Packer.new(io)
       @chunk_size = chunk_size
       @maxbuf = maxbuf
+      @consumers = []
     end
 
     # class cl should define #to_msgpack and cl.from_serialized; the block form
@@ -271,6 +272,10 @@ module ObjectStream
       @expected_class = cl
     end
     
+    def consume &bl
+      @consumers << bl
+    end
+
     def read_from_stream
       fill_buffer(chunk_size)
       checkbuf if maxbuf
@@ -285,7 +290,17 @@ module ObjectStream
 
     def read_from_buffer
       @unpacker.each do |obj|
-        yield @expected_class ? @expected_class.from_serialized(obj) : obj
+        try_consume(obj) or
+          yield @expected_class ? @expected_class.from_serialized(obj) : obj
+      end
+    end
+
+    def try_consume obj
+      if bl = @consumers.shift
+        bl[obj]
+        true
+      else
+        false
       end
     end
     
