@@ -81,6 +81,31 @@ module TestBasic
       "dump is #{dump.inspect}")
   end
 
+  def test_break
+    skip "test exception/break/next/redo/return/rewind during read {...}"
+
+    a = (1..10).to_a
+    a.each do |i|
+      stream.write [i]
+    end
+  
+    sio.rewind
+    
+    a2 = []
+    stream.each do |object|
+      i = object[0]
+      a2 << i
+      break if i == 5
+    end
+    
+    stream.each do |object|
+      i = object[0]
+      a2 << i
+    end
+
+    assert_equal(a, a2)
+  end
+
   def test_enum
     objects.each do |obj|
       stream.write obj
