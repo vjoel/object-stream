@@ -109,17 +109,28 @@ module ObjectStream
   end
   alias << write
 
+  def write_to_object_buffer object=nil, &bl
+    @out_buffer << (bl || object)
+    flush_object_buffer if @out_buffer.size > MAX_OUT_BUFFER
+    self
+  end
+
+  def flush_object_buffer
+    @out_buffer.each do |object|
+      object = object.call if object.kind_of? Proc
+      write_to_stream object
+    end
+    @out_buffer.clear
+    self
+  end
+
   def write_to_buffer object
-    @out_buffer << object
-    flush_buffer if @out_buffer.size > MAX_OUT_BUFFER
+    flush_object_buffer
+    write_to_stream object
     self
   end
 
   def flush_buffer
-    @out_buffer.each do |object|
-      write_to_stream object
-    end
-    @out_buffer.clear
     self
   end
 
@@ -139,7 +150,7 @@ module ObjectStream
   # a #flush_buffer. If you only use #write, there's no need to close
   # the stream in any special way.
   def close
-    flush_buffer
+    flush_object_buffer
     io.close
   end
   
@@ -317,6 +328,7 @@ module ObjectStream
     end
     
     def write_to_buffer object
+      flush_object_buffer
       @packer.write(object)
       self
     end
