@@ -15,7 +15,7 @@ module ObjectStream
     MARSHAL_TYPE, YAML_TYPE, JSON_TYPE, MSGPACK_TYPE
   ]
 
-  MAX_OUT_BUFFER = 10
+  MAX_OUTBOX = 10
 
   # Raised when maxbuf exceeded.
   class OverflowError < StandardError; end
@@ -57,8 +57,8 @@ module ObjectStream
   
   def initialize io, **opts
     @io = io
-    @object_buffer = nil
-    @out_buffer = []
+    @inbox = nil
+    @outbox = []
     @peer_name = "unknown"
     @consumers = []
     unexpect
@@ -87,7 +87,7 @@ module ObjectStream
   # raises EOFError
   def read
     if block_given?
-      read_from_object_buffer {|obj| try_consume(obj) or yield obj}
+      read_from_inbox {|obj| try_consume(obj) or yield obj}
       read_from_stream {|obj| try_consume(obj) or yield obj}
       return nil
     else
@@ -97,8 +97,8 @@ module ObjectStream
 
   # read and return exactly one; blocking
   def read_one
-    if @object_buffer and not @object_buffer.empty?
-      return @object_buffer.shift
+    if @inbox and not @inbox.empty?
+      return @inbox.shift
     end
     
     have_result = false
@@ -106,7 +106,7 @@ module ObjectStream
     until have_result
       read do |obj| # might not read enough bytes to yield an obj
         if have_result
-          (@object_buffer||=[]) << obj
+          (@inbox||=[]) << obj
         else
           have_result = true
           result = obj
@@ -116,10 +116,10 @@ module ObjectStream
     result
   end
 
-  def read_from_object_buffer
-    if @object_buffer and not @object_buffer.empty?
-      @object_buffer.each {|obj| yield obj}
-      @object_buffer.clear
+  def read_from_inbox
+    if @inbox and not @inbox.empty?
+      @inbox.each {|obj| yield obj}
+      @inbox.clear
     end
   end
   
@@ -129,23 +129,23 @@ module ObjectStream
   end
   alias << write
 
-  def write_to_object_buffer object=nil, &bl
-    @out_buffer << (bl || object)
-    flush_object_buffer if @out_buffer.size > MAX_OUT_BUFFER
+  def write_to_outbox object=nil, &bl
+    @outbox << (bl || object)
+    flush_outbox if @outbox.size > MAX_OUTBOX
     self
   end
 
-  def flush_object_buffer
-    @out_buffer.each do |object|
+  def flush_outbox
+    @outbox.each do |object|
       object = object.call if object.kind_of? Proc
       write_to_stream object
     end
-    @out_buffer.clear
+    @outbox.clear
     self
   end
 
   def write_to_buffer object
-    flush_object_buffer
+    flush_outbox
     write_to_stream object
     self
   end
@@ -162,7 +162,7 @@ module ObjectStream
   end
   
   def eof?
-    (!@object_buffer || @object_buffer.empty?) && io.eof?
+    (!@inbox || @inbox.empty?) && io.eof?
   end
   alias eof eof?
 
@@ -170,7 +170,7 @@ module ObjectStream
   # a #flush_buffer. If you only use #write, there's no need to close
   # the stream in any special way.
   def close
-    flush_object_buffer
+    flush_outbox
     io.close
   end
   
@@ -335,7 +335,7 @@ module ObjectStream
     end
     
     def write_to_buffer object
-      flush_object_buffer
+      flush_outbox
       @packer.write(object)
       self
     end
