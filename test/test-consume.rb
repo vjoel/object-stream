@@ -3,26 +3,32 @@ require 'stringio'
 
 require 'minitest/autorun'
 
-class TestExpect < MiniTest::Unit::TestCase
+class TestConsume < MiniTest::Unit::TestCase
   attr_reader :sio
 
   def setup
     @sio = StringIO.new
   end
   
-  def test_consume
+  ObjectStream::TYPES.each do |type|
+    define_method "test_consume_#{type}" do
+      do_test_consume_for type: type
+    end
+  end
+
+  def do_test_consume_for(type: type)
     n_total = 10
     n_consumed = 5
     
     objects = (0...n_total).map {|i| [i]}
     
-    stream = ObjectStream.new(sio, type: ObjectStream::MSGPACK_TYPE)
+    stream = ObjectStream.new(sio, type: type)
     objects.each do |object|
       stream << object
     end
     
     sio.rewind
-    stream = ObjectStream.new(sio, type: ObjectStream::MSGPACK_TYPE)
+    stream = ObjectStream.new(sio, type: type)
     
     count = 0
     

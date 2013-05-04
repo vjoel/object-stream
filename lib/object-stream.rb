@@ -11,6 +11,10 @@ module ObjectStream
   JSON_TYPE     = "json"
   MSGPACK_TYPE  = "msgpack"
   
+  TYPES = [
+    MARSHAL_TYPE, YAML_TYPE, JSON_TYPE, MSGPACK_TYPE
+  ]
+
   MAX_OUT_BUFFER = 10
 
   # Raised when maxbuf exceeded.
@@ -56,6 +60,7 @@ module ObjectStream
     @object_buffer = nil
     @out_buffer = []
     @peer_name = "unknown"
+    @consumers = []
     unexpect
   end
   
@@ -65,12 +70,25 @@ module ObjectStream
   
   def expect cl = nil; end
   def unexpect; expect nil; end
-  
+
+  def consume &bl
+    @consumers << bl
+  end
+
+  def try_consume obj
+    if bl = @consumers.shift
+      bl[obj]
+      true
+    else
+      false
+    end
+  end
+
   # raises EOFError
   def read
     if block_given?
-      read_from_object_buffer {|obj| yield obj}
-      read_from_stream {|obj| yield obj}
+      read_from_object_buffer {|obj| try_consume(obj) or yield obj}
+      read_from_stream {|obj| try_consume(obj) or yield obj}
       return nil
     else
       read_one
@@ -240,6 +258,7 @@ module ObjectStream
       @expected_class = cl
     end
     
+    # Blocks only if no data available on io.
     def read_from_stream
       @parser.on_parse_complete = proc do |obj|
         yield @expected_class ? @expected_class.from_serialized(obj) : obj
@@ -275,7 +294,6 @@ module ObjectStream
       @packer = MessagePack::Packer.new(io)
       @chunk_size = chunk_size
       @maxbuf = maxbuf
-      @consumers = []
     end
 
     # class cl should define #to_msgpack and cl.from_serialized; the block form
@@ -285,10 +303,7 @@ module ObjectStream
       @expected_class = cl
     end
     
-    def consume &bl
-      @consumers << bl
-    end
-
+    # Blocks only if no data available on io.
     def read_from_stream
       fill_buffer(chunk_size)
       checkbuf if maxbuf
@@ -303,20 +318,10 @@ module ObjectStream
 
     def read_from_buffer
       @unpacker.each do |obj|
-        try_consume(obj) or
-          yield @expected_class ? @expected_class.from_serialized(obj) : obj
+        yield @expected_class ? @expected_class.from_serialized(obj) : obj
       end
     end
 
-    def try_consume obj
-      if bl = @consumers.shift
-        bl[obj]
-        true
-      else
-        false
-      end
-    end
-    
     def checkbuf
       if maxbuf and @unpacker.buffer.size > maxbuf
         raise OverflowError,
