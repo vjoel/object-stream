@@ -6,10 +6,10 @@ module ObjectStream
   attr_reader :io
   attr_accessor :peer_name
   
-  MARSHAL_TYPE  = :marshal
-  YAML_TYPE     = :yaml
-  JSON_TYPE     = :json
-  MSGPACK_TYPE  = :msgpack
+  MARSHAL_TYPE  = "marshal"
+  YAML_TYPE     = "yaml"
+  JSON_TYPE     = "json"
+  MSGPACK_TYPE  = "msgpack"
   
   MAX_OUT_BUFFER = 10
 
@@ -36,7 +36,7 @@ module ObjectStream
       if cl.respond_to? :new
         cl
       else
-        @mutex.synchronize do ## seems like overkill
+        @mutex.synchronize do ## seems like overkill. Is autoload working?
           if cl.respond_to? :new
             cl
           else
