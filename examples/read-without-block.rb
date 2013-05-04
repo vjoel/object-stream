@@ -2,7 +2,7 @@ require 'object-stream'
 require 'socket'
 
 begin
-  type = :msgpack
+  type = ObjectStream::MSGPACK_TYPE
 
   s, t = UNIXSocket.pair
 
