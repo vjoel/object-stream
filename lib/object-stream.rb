@@ -9,8 +9,16 @@
 module ObjectStream
   include Enumerable
   
+  # The IO through which the stream reads and writes serialized object data.
   attr_reader :io
+  
+  # Number of outgoing objects that can accumulate before the outbox is
+  # serialized to the character buffer (and possible to the io).
   attr_reader :max_outbox
+  
+  # Not set by this library, but available for users to keep track of
+  # the peer in a symbolic, application-specific manner. See funl for
+  # an example.
   attr_accessor :peer_name
   
   MARSHAL_TYPE  = "marshal"
@@ -71,9 +79,17 @@ module ObjectStream
     "#<#{self.class} to #{peer_name}, io=#{io.inspect}>"
   end
   
+  # Set the stream state so that subsequent objects will be instances of a
+  # custom class +cl+, assuming that +cl+ supports certain methods. See the
+  # comments for specific serializer expect methods. Not needed for classes that
+  # serialize the class of an object.
   def expect cl = nil; end
+  
+  # Turn off the custom class instantiation of #expect.
   def unexpect; expect nil; end
 
+  # The block is appended to a queue of procs that are called for the
+  # subsequently read objects, instead of iterating over or returning them.
   def consume &bl
     @consumers << bl
   end
@@ -250,7 +266,7 @@ module ObjectStream
       @chunk_size = chunk_size
     end
 
-    # class cl should define #to_json and cl.from_serialized; the block form
+    # Class +cl+ should define #to_json and cl.from_serialized; the block form
     # has the same effect, but avoids executing the code in the block in the
     # case when expect is a no-op (marshal and yaml).
     def expect cl = yield
@@ -295,9 +311,9 @@ module ObjectStream
       @maxbuf = maxbuf
     end
 
-    # class cl should define #to_msgpack and cl.from_serialized; the block form
-    # has the same effect, but avoids executing the code in the block in the
-    # case when expect is a no-op (marshal and yaml).
+    # Class +cl+ should define #to_msgpack and cl.from_serialized; the block
+    # form has the same effect, but avoids executing the code in the block in
+    # the case when expect is a no-op (marshal and yaml).
     def expect cl = yield
       @expected_class = cl
     end
