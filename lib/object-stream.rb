@@ -44,16 +44,13 @@ module ObjectStream
 
     def stream_class_for type
       cl = @stream_class_map[type]
-      if cl.respond_to? :new
-        cl
-      else
-        @mutex.synchronize do ## seems like overkill. Is autoload working?
-          if cl.respond_to? :new
-            cl
-          else
-            @stream_class_map[type] = cl.call
-          end
-        end
+      return cl if cl.respond_to? :new
+
+      # Protect against race condition in msgpack and yajl extension
+      # initialization (bug #8374).
+      @mutex.synchronize do
+        return cl if cl.respond_to? :new
+        @stream_class_map[type] = cl.call
       end
     end
     
