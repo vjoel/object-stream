@@ -10,6 +10,7 @@ module ObjectStream
   include Enumerable
   
   attr_reader :io
+  attr_reader :max_outbox
   attr_accessor :peer_name
   
   MARSHAL_TYPE  = "marshal"
@@ -21,7 +22,7 @@ module ObjectStream
     MARSHAL_TYPE, YAML_TYPE, JSON_TYPE, MSGPACK_TYPE
   ]
 
-  MAX_OUTBOX = 10
+  DEFAULT_MAX_OUTBOX = 10
 
   # Raised when maxbuf exceeded.
   class OverflowError < StandardError; end
@@ -61,8 +62,9 @@ module ObjectStream
     end
   end
   
-  def initialize io, **opts
+  def initialize io, max_outbox: DEFAULT_MAX_OUTBOX, **opts
     @io = io
+    @max_outbox = max_outbox
     @inbox = nil
     @outbox = []
     @peer_name = "unknown"
@@ -137,7 +139,7 @@ module ObjectStream
 
   def write_to_outbox object=nil, &bl
     @outbox << (bl || object)
-    flush_outbox if @outbox.size > MAX_OUTBOX
+    flush_outbox if @outbox.size > max_outbox
     self
   end
 
