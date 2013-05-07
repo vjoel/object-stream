@@ -183,10 +183,6 @@ module ObjectStream
     io.closed?
   end
   
-  def accept
-    io.accept
-  end
-  
   # Makes it possible to use stream in a select.
   def to_io
     io
