@@ -1,5 +1,11 @@
-# Stream of objects, with any underlying IO.
-# Stream is bidirectional if the IO is bidirectional.
+# Stream of objects, with any underlying IO: File, Pipe, Socket, StringIO.
+# Stream is bidirectional if the IO is bidirectional. Serializes objects using
+# any of several serializers: marshal, yaml, json, msgpack. Works with
+# select/readpartial if the serializer supports it (msgpack and yajl do).
+# ObjectStream supports three styles of iteration: Enumerable, blocking read,
+# and yielding read. The #expect method is a way to instantiate custom classes
+# in cases (msgpack, json) which do not support it natively. The #consume
+# method helps with handshake protocols.
 module ObjectStream
   include Enumerable
   
