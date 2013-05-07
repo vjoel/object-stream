@@ -21,7 +21,7 @@ module ObjectStream
   class OverflowError < StandardError; end
 
   @stream_class_map =
-    Hash.new {raise ArgumentError, "unknown type: #{type.inspect}"}
+    Hash.new {|h,type| raise ArgumentError, "unknown type: #{type.inspect}"}
   @mutex = Mutex.new
 
   class << self
