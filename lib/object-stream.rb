@@ -102,6 +102,7 @@ module ObjectStream
       false
     end
   end
+  private :try_consume
 
   # raises EOFError
   def read
