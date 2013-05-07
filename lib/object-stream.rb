@@ -37,8 +37,6 @@ module ObjectStream
         raise ArgumentError,
           "given io is already an ObjectStream: #{io.inspect}"
       end
-      ## discover type by reading the io
-      ## can the io be an in-memory queue?
       stream_class_for(type).new io, **opts
     end
 
