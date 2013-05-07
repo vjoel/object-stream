@@ -11,7 +11,7 @@ begin
   dir = Dir.mktmpdir "stream-"
   dumpfile = File.join(dir, "dump")
 
-  type = ARGV.shift.intern
+  type = ARGV.shift
   
   class A
     def initialize x, y

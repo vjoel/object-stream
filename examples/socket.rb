@@ -8,7 +8,7 @@ require 'object-stream'
 require 'socket'
 
 begin
-  type = ARGV.shift.intern
+  type = ARGV.shift
 
   s, t = UNIXSocket.pair
 

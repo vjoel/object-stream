@@ -9,7 +9,7 @@ require 'socket'
 require 'stringio'
 
 begin
-  type = ARGV.shift.intern
+  type = ARGV.shift
 
   s, t = UNIXSocket.pair
 

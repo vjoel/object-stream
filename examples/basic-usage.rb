@@ -11,7 +11,7 @@ begin
   dir = Dir.mktmpdir "stream-"
   dumpfile = File.join(dir, "dump")
 
-  type = ARGV.shift.intern
+  type = ARGV.shift
   
   File.open(dumpfile, "w") do |f|
     stream = ObjectStream.new(f, type: type)

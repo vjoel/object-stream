@@ -8,7 +8,7 @@ begin
 
   pid = fork do
     stream = ObjectStream.new(s, type: type)
-    100.times do |i|
+    10.times do |i|
       stream << [i]
     end
   end

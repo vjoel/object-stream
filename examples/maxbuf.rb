@@ -13,5 +13,5 @@ stream = ObjectStream.new(sio, type: ObjectStream::MSGPACK_TYPE, maxbuf: 20)
 begin
   stream.to_a
 rescue ObjectStream::OverflowError => ex
-  puts ex # => Exceeded buffer limit by 52 bytes.
+  puts ex # => Exceeded buffer limit by 53 bytes.
 end

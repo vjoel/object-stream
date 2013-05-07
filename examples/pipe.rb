@@ -7,7 +7,7 @@ end
 require 'object-stream'
 
 begin
-  type = ARGV.shift.intern
+  type = ARGV.shift
 
   rd, wr = IO.pipe
 
