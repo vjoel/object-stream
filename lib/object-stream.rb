@@ -13,7 +13,7 @@ module ObjectStream
   attr_reader :io
   
   # Number of outgoing objects that can accumulate before the outbox is
-  # serialized to the character buffer (and possible to the io).
+  # serialized to the character buffer (and possibly to the io).
   attr_reader :max_outbox
   
   # Not set by this library, but available for users to keep track of
@@ -104,7 +104,9 @@ module ObjectStream
   end
   private :try_consume
 
-  # raises EOFError
+  # If no block given, behaves just the same as #read_one. If block given,
+  # reads any available data and yields it to the block. This form is non-
+  # blocking, if supported by the underlying serializer (such as msgpack).
   def read
     if block_given?
       read_from_inbox {|obj| try_consume(obj) or yield obj}
@@ -115,7 +117,8 @@ module ObjectStream
     end
   end
 
-  # read and return exactly one; blocking
+  # Read one object from the stream, blocking if necessary. Returns the object.
+  # Raises EOFError at the end of the stream.
   def read_one
     if @inbox and not @inbox.empty?
       return @inbox.shift
