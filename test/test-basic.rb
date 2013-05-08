@@ -68,6 +68,15 @@ module TestBasic
     end
   end
   
+  def test_batch_write
+    a = ["a", "b", "c"]
+    stream.write *a
+    sio.rewind
+    dump = sio.read
+    sio.rewind
+    assert_equal(a, stream.to_a, "dump is #{dump.inspect}")
+  end
+
   def test_each
     objects.each do |obj|
       stream.write obj

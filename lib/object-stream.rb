@@ -147,8 +147,8 @@ module ObjectStream
   end
   private :read_from_inbox
   
-  def write object
-    write_to_buffer object
+  def write *objects
+    write_to_buffer *objects
     flush_buffer
   end
   alias << write
@@ -168,9 +168,11 @@ module ObjectStream
     self
   end
 
-  def write_to_buffer object
+  def write_to_buffer *objects
     flush_outbox
-    write_to_stream object
+    objects.each do |object|
+      write_to_stream object
+    end
     self
   end
 
@@ -354,9 +356,11 @@ module ObjectStream
       self
     end
     
-    def write_to_buffer object
+    def write_to_buffer *objects
       flush_outbox
-      @packer.write(object)
+      objects.each do |object|
+        @packer.write(object)
+      end
       self
     end
     
