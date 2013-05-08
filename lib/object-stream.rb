@@ -145,6 +145,7 @@ module ObjectStream
       @inbox.clear
     end
   end
+  private :read_from_inbox
   
   def write object
     write_to_buffer object
