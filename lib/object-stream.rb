@@ -21,10 +21,10 @@ module ObjectStream
   # an example.
   attr_accessor :peer_name
   
-  MARSHAL_TYPE  = "marshal"
-  YAML_TYPE     = "yaml"
-  JSON_TYPE     = "json"
-  MSGPACK_TYPE  = "msgpack"
+  MARSHAL_TYPE  = "marshal".freeze
+  YAML_TYPE     = "yaml".freeze
+  JSON_TYPE     = "json".freeze
+  MSGPACK_TYPE  = "msgpack".freeze
   
   TYPES = [
     MARSHAL_TYPE, YAML_TYPE, JSON_TYPE, MSGPACK_TYPE
