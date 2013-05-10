@@ -4,7 +4,7 @@ require 'stringio'
 
 require 'minitest/autorun'
 
-class TestSlowSender < MiniTest::Unit::TestCase
+class TestSlowSender < Minitest::Test
   attr_reader :s, :t
   
   def setup

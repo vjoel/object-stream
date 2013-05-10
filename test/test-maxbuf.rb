@@ -3,7 +3,7 @@ require 'stringio'
 
 require 'minitest/autorun'
 
-class TestMaxbuf < MiniTest::Unit::TestCase
+class TestMaxbuf < Minitest::Test
   attr_reader :sio, :stream
   
   def setup

@@ -3,7 +3,7 @@ require 'stringio'
 
 require 'minitest/autorun'
 
-class TestExpect < MiniTest::Unit::TestCase
+class TestExpect < Minitest::Test
   attr_reader :sio
   
   class A

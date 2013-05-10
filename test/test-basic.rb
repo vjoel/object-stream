@@ -149,28 +149,28 @@ module TestBasic
   end
 end
 
-class TestBasicMarshal < MiniTest::Unit::TestCase
+class TestBasicMarshal < Minitest::Test
   include TestBasic
 
   TYPE = ObjectStream::MARSHAL_TYPE
   OBJECTS = ADVANCED_OBJECTS + RUBY_OBJECTS
 end
 
-class TestBasicYaml < MiniTest::Unit::TestCase
+class TestBasicYaml < Minitest::Test
   include TestBasic
 
   TYPE = ObjectStream::YAML_TYPE
   OBJECTS = ADVANCED_OBJECTS + RUBY_OBJECTS
 end
 
-class TestBasicJson < MiniTest::Unit::TestCase
+class TestBasicJson < Minitest::Test
   include TestBasic
 
   TYPE = ObjectStream::JSON_TYPE
   OBJECTS = [] # poor json!
 end
 
-class TestBasicMsgpack < MiniTest::Unit::TestCase
+class TestBasicMsgpack < Minitest::Test
   include TestBasic
 
   TYPE = ObjectStream::MSGPACK_TYPE
