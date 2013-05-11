@@ -1,11 +1,16 @@
 # Stream of objects, with any underlying IO: File, Pipe, Socket, StringIO.
-# Stream is bidirectional if the IO is bidirectional. Serializes objects using
-# any of several serializers: marshal, yaml, json, msgpack. Works with
-# select/readpartial if the serializer supports it (msgpack and yajl do).
+# Stream is bidirectional if the IO is bidirectional.
+#
+# Serializes objects using any of several serializers: marshal, yaml, json,
+# msgpack. Works with select/readpartial if the serializer supports it (msgpack
+# and yajl do).
+#
 # ObjectStream supports three styles of iteration: Enumerable, blocking read,
-# and yielding read. The #expect method is a way to instantiate custom classes
-# in cases (msgpack, json) which do not support it natively. The #consume
-# method helps with handshake protocols.
+# and yielding (non-blocking) read.
+#
+# The #expect method is a way to instantiate custom classes in cases (msgpack,
+# json) which do not support it natively. The #consume method helps with
+# handshake protocols.
 module ObjectStream
   include Enumerable
   
@@ -13,7 +18,7 @@ module ObjectStream
   attr_reader :io
   
   # Number of outgoing objects that can accumulate before the outbox is
-  # serialized to the character buffer (and possibly to the io).
+  # serialized to the byte buffer (and possibly to the io).
   attr_reader :max_outbox
   
   # Not set by this library, but available for users to keep track of
@@ -147,12 +152,17 @@ module ObjectStream
   end
   private :read_from_inbox
   
+  # Write the given objects to the stream, first flushing any objects in the
+  # outbox. Flushes the underlying byte buffer afterwards.
   def write *objects
     write_to_buffer *objects
     flush_buffer
   end
   alias << write
 
+  # Push the given object into the outbox, to be written later when the outbox
+  # is flushed. If a block is given, it will be called when the outbox is
+  # flushed, and its value will be written instead.
   def write_to_outbox object=nil, &bl
     @outbox << (bl || object)
     flush_outbox if @outbox.size > max_outbox
@@ -180,7 +190,9 @@ module ObjectStream
     self
   end
 
-  # does not raise EOFError
+  # Iterate through the (rest of) the stream of objects. Does not raise
+  # EOFError, but simply returns. All Enumerable and Enumerator methods are
+  # available.
   def each
     return to_enum unless block_given?
     read {|obj| yield obj} until eof
