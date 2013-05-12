@@ -28,8 +28,6 @@ class TestObjectBuffer < Minitest::Test
   
   def do_test type
     n = 200
-    n_each = [n - 40, n/2].max
-    
     th = Thread.new do
       src = ObjectStream.new(s, type: type)
       n.times do |i|
@@ -42,27 +40,24 @@ class TestObjectBuffer < Minitest::Test
     i = 0
 
     begin
-      loop do
-        rand(5).times do
-          assert_equal(i, dst.read[0])
-          i+=1
-        end
-
-        dst.read do |obj|
-          assert_equal(i, obj[0])
-          i+=1
-        end
-        
-        if i > n_each
-          dst.each do |obj|
-            assert_equal(i, obj[0])
-            i+=1
-          end
-        end
-
-        break if type == ObjectStream::YAML_TYPE ###
+      rand(5).times do
+        assert_equal(i, dst.read[0])
+        i+=1
       end
     rescue EOFError
+    end
+
+    begin
+      dst.read do |obj|
+        assert_equal(i, obj[0])
+        i+=1
+      end
+    rescue EOFError
+    end
+
+    dst.each do |obj|
+      assert_equal(i, obj[0])
+      i+=1
     end
 
     assert_equal n, i
