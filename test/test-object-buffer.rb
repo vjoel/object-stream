@@ -15,10 +15,7 @@ class TestObjectBuffer < Minitest::Test
   end
   
   def test_yaml
-    assert_raises RuntimeError do
-      # YamlStream does not support read without a block.
-      do_test(ObjectStream::YAML_TYPE)
-    end
+    do_test(ObjectStream::YAML_TYPE)
   end
   
   def test_json
@@ -43,6 +40,7 @@ class TestObjectBuffer < Minitest::Test
 
     dst = ObjectStream.new(t, type: type)
     i = 0
+
     begin
       loop do
         rand(5).times do
@@ -61,8 +59,12 @@ class TestObjectBuffer < Minitest::Test
             i+=1
           end
         end
+
+        break if type == ObjectStream::YAML_TYPE ###
       end
     rescue EOFError
     end
+
+    assert_equal n, i
   end
 end

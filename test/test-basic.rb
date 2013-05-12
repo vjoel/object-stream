@@ -130,8 +130,6 @@ module TestBasic
   end
   
   def test_read_without_block
-    return if type == ObjectStream::YAML_TYPE
-
     n = 100
     n.times do |i|
       stream << [i]

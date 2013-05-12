@@ -246,13 +246,6 @@ module ObjectStream
       self
     end
     
-    def read(*)
-      unless block_given?
-        raise "YamlStream does not support read without a block."
-      end
-      super
-    end
-      
     def read_from_stream
       YAML.load_stream(io) do |obj|
         yield obj
