@@ -3,7 +3,7 @@ require 'socket'
 
 require 'minitest/autorun'
 
-class TestObjectBuffer < Minitest::Test
+class TestInbox < Minitest::Test
   attr_reader :s, :t
   
   def setup
