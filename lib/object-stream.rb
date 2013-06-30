@@ -7,10 +7,6 @@
 #
 # ObjectStream supports three styles of iteration: Enumerable, blocking read,
 # and yielding (non-blocking) read.
-#
-# The #expect method is a way to instantiate custom classes in cases (msgpack,
-# json) which do not support it natively. The #consume method helps with
-# handshake protocols.
 module ObjectStream
   include Enumerable
   
@@ -20,11 +16,6 @@ module ObjectStream
   # Number of outgoing objects that can accumulate before the outbox is
   # serialized to the byte buffer (and possibly to the io).
   attr_reader :max_outbox
-  
-  # Not set by this library, but available for users to keep track of
-  # the peer in a symbolic, application-specific manner. See funl for
-  # an example.
-  attr_accessor :peer_name
   
   MARSHAL_TYPE  = "marshal".freeze
   YAML_TYPE     = "yaml".freeze
@@ -75,47 +66,19 @@ module ObjectStream
     @max_outbox = max_outbox
     @inbox = nil
     @outbox = []
-    @peer_name = "unknown"
-    @consumers = []
-    unexpect
   end
   
   def to_s
-    "#<#{self.class} to #{peer_name}, io=#{io.inspect}>"
+    "#<#{self.class} io=#{io.inspect}>"
   end
   
-  # Set the stream state so that subsequent objects will be instances of a
-  # custom class +cl+, assuming that +cl+ supports certain methods. See the
-  # comments for specific serializer expect methods. Not needed for classes that
-  # serialize the class of an object.
-  def expect cl = nil; end
-  
-  # Turn off the custom class instantiation of #expect.
-  def unexpect; expect nil; end
-
-  # The block is appended to a queue of procs that are called for the
-  # subsequently read objects, instead of iterating over or returning them.
-  def consume &bl
-    @consumers << bl
-  end
-
-  def try_consume obj
-    if bl = @consumers.shift
-      bl[obj]
-      true
-    else
-      false
-    end
-  end
-  private :try_consume
-
   # If no block given, behaves just the same as #read_one. If block given,
   # reads any available data and yields it to the block. This form is non-
   # blocking, if supported by the underlying serializer (such as msgpack).
   def read
     if block_given?
-      read_from_inbox {|obj| try_consume(obj) or yield obj}
-      read_from_stream {|obj| try_consume(obj) or yield obj}
+      read_from_inbox {|obj| yield obj}
+      read_from_stream {|obj| yield obj}
       return nil
     else
       read_one
@@ -278,18 +241,9 @@ module ObjectStream
       @chunk_size = chunk_size
     end
 
-    # Class +cl+ should define #to_json and cl.from_serialized; the block form
-    # has the same effect, but avoids executing the code in the block in the
-    # case when expect is a no-op (marshal and yaml).
-    def expect cl = yield
-      @expected_class = cl
-    end
-    
     # Blocks only if no data available on io.
-    def read_from_stream
-      @parser.on_parse_complete = proc do |obj|
-        yield @expected_class ? @expected_class.from_serialized(obj) : obj
-      end
+    def read_from_stream(&bl)
+      @parser.on_parse_complete = bl
       @parser << io.readpartial(chunk_size)
     end
     
@@ -323,13 +277,6 @@ module ObjectStream
       @maxbuf = maxbuf
     end
 
-    # Class +cl+ should define #to_msgpack and cl.from_serialized; the block
-    # form has the same effect, but avoids executing the code in the block in
-    # the case when expect is a no-op (marshal and yaml).
-    def expect cl = yield
-      @expected_class = cl
-    end
-    
     # Blocks only if no data available on io.
     def read_from_stream
       fill_buffer(chunk_size)
@@ -345,7 +292,7 @@ module ObjectStream
 
     def read_from_buffer
       @unpacker.each do |obj|
-        yield @expected_class ? @expected_class.from_serialized(obj) : obj
+        yield obj
       end
     end
 

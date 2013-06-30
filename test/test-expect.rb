@@ -1,4 +1,4 @@
-require 'object-stream'
+require 'object-stream-wrapper'
 require 'stringio'
 
 require 'minitest/autorun'
@@ -59,13 +59,13 @@ class TestExpect < Minitest::Test
       end
     end
     
-    stream = ObjectStream.new(sio, type: ObjectStream::MSGPACK_TYPE)
+    stream = ObjectStreamWrapper.new(sio, type: ObjectStream::MSGPACK_TYPE)
     objects.each do |object|
       stream << object
     end
     
     sio.rewind
-    stream = ObjectStream.new(sio, type: ObjectStream::MSGPACK_TYPE)
+    stream = ObjectStreamWrapper.new(sio, type: ObjectStream::MSGPACK_TYPE)
     objects2 = []
     stream.read do |object|
       case object

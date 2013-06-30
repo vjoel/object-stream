@@ -1,4 +1,4 @@
-require 'object-stream'
+require 'object-stream-wrapper'
 require 'stringio'
 
 require 'minitest/autorun'
@@ -22,13 +22,13 @@ class TestConsume < Minitest::Test
     
     objects = (0...n_total).map {|i| [i]}
     
-    stream = ObjectStream.new(sio, type: type)
+    stream = ObjectStreamWrapper.new(sio, type: type)
     objects.each do |object|
       stream << object
     end
     
     sio.rewind
-    stream = ObjectStream.new(sio, type: type)
+    stream = ObjectStreamWrapper.new(sio, type: type)
     
     count = 0
     
