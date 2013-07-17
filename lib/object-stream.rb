@@ -10,6 +10,8 @@
 module ObjectStream
   include Enumerable
   
+  VERSION = "0.2"
+  
   # The IO through which the stream reads and writes serialized object data.
   attr_reader :io
   
