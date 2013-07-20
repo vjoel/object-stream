@@ -27,5 +27,5 @@ Gem::Specification.new do |s|
   s.summary = "Stream objects over IO using Marshal, JSON, YAML, or Msgpack"
 
   s.add_dependency 'msgpack'
-  s.add_dependency 'yajl'
+  s.add_dependency 'yajl-ruby'
 end
