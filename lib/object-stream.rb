@@ -33,6 +33,9 @@ module ObjectStream
   # Raised when maxbuf exceeded.
   class OverflowError < StandardError; end
 
+  # Raised when incoming data is unreadable.
+  class StreamError < StandardError; end
+
   @stream_class_map =
     Hash.new {|h,type| raise ArgumentError, "unknown type: #{type.inspect}"}
   @mutex = Mutex.new
@@ -80,11 +83,19 @@ module ObjectStream
   def read
     if block_given?
       read_from_inbox {|obj| yield obj}
-      read_from_stream {|obj| yield obj}
+      checked_read_from_stream {|obj| yield obj}
       return nil
     else
       read_one
     end
+  end
+
+  def checked_read_from_stream
+    read_from_stream {|obj| yield obj}
+  rescue IOError, SystemCallError, OverflowError
+    raise
+  rescue => ex
+    raise StreamError, "unreadble stream: #{ex}"
   end
 
   # Read one object from the stream, blocking if necessary. Returns the object.

@@ -63,6 +63,8 @@ class ObjectStreamWrapper
     else
       obj
     end
+  rescue => ex
+    raise StreamError, "cannot convert to expected class: #{obj.inspect}: #{ex}"
   end
   private :convert_to_expected
 
