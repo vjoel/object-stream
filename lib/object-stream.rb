@@ -247,9 +247,10 @@ module ObjectStream
 
     DEFAULT_CHUNK_SIZE = 2000
 
-    def initialize io, chunk_size: DEFAULT_CHUNK_SIZE
+    # See the discussion in examples/symbolize-keys.rb.
+    def initialize io, chunk_size: DEFAULT_CHUNK_SIZE, symbolize_keys: false
       super
-      @parser = Yajl::Parser.new
+      @parser = Yajl::Parser.new(symbolize_keys: symbolize_keys)
       @encoder = Yajl::Encoder.new
       @chunk_size = chunk_size
     end
@@ -280,9 +281,11 @@ module ObjectStream
     DEFAULT_CHUNK_SIZE = 2000
     DEFAULT_MAXBUF = 4000
     
-    def initialize io, chunk_size: DEFAULT_CHUNK_SIZE, maxbuf: DEFAULT_MAXBUF
+    # See the discussion in examples/symbolize-keys.rb.
+    def initialize io, chunk_size: DEFAULT_CHUNK_SIZE, maxbuf: DEFAULT_MAXBUF,
+          symbolize_keys: false
       super
-      @unpacker = MessagePack::Unpacker.new
+      @unpacker = MessagePack::Unpacker.new(symbolize_keys: symbolize_keys)
         # don't specify io, so don't have to read all of io in one loop
       
       @packer = MessagePack::Packer.new(io)
