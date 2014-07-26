@@ -5,7 +5,7 @@ require 'minitest/autorun'
 
 class TestOutbox < Minitest::Test
   attr_reader :sio
-  
+
   def setup
     @sio = StringIO.new
   end

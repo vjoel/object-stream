@@ -28,7 +28,7 @@ class ObjectStreamWrapper
   def to_s
     "#<Wrapped #{@stream.class} to #{peer_name}, io=#{@stream.inspect}>"
   end
-  
+
   # Set the stream state so that subsequent objects returned by read will be
   # instances of a custom class +cl+. Does not affect #consume.
   # Class +cl+ should define cl.from_serialized, plus #to_json, #to_msgpack,
@@ -36,7 +36,7 @@ class ObjectStreamWrapper
   def expect cl
     @expected_class = cl
   end
-  
+
   # Turn off the custom class instantiation of #expect.
   def unexpect; expect nil; end
 
@@ -56,7 +56,7 @@ class ObjectStreamWrapper
     end
   end
   private :try_consume
-  
+
   def convert_to_expected obj
     if @expected_class and not obj.kind_of? @expected_class
       @expected_class.from_serialized(obj)
@@ -81,7 +81,7 @@ class ObjectStreamWrapper
       convert_to_expected(obj)
     end
   end
-  
+
   def each
     return to_enum unless block_given?
     read {|obj| yield obj} until eof
@@ -89,12 +89,12 @@ class ObjectStreamWrapper
   end
 
   def write *objects
-    @stream.write *objects
+    @stream.write(*objects)
   end
   alias << write
 
   def write_to_outbox *args, &bl
-    @stream.write_to_outbox *args, &bl
+    @stream.write_to_outbox(*args, &bl)
   end
 
   def eof?

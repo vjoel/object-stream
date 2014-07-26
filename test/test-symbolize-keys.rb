@@ -5,7 +5,7 @@ require 'minitest/autorun'
 
 module TestSymbolizeKeys
   attr_reader :sio, :stream
-  
+
   BASIC_OBJECTS = [
     nil,
     true,
@@ -23,7 +23,7 @@ module TestSymbolizeKeys
     @sio = StringIO.new
     @stream = ObjectStream.new sio, type: type, symbolize_keys: true
   end
-  
+
   def test_write_read
     objects.each do |obj|
       sio.rewind # do not need to clear stream's buffer (if any)

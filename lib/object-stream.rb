@@ -9,21 +9,21 @@
 # and yielding (non-blocking) read.
 module ObjectStream
   include Enumerable
-  
+
   VERSION = "0.5"
-  
+
   # The IO through which the stream reads and writes serialized object data.
   attr_reader :io
-  
+
   # Number of outgoing objects that can accumulate before the outbox is
   # serialized to the byte buffer (and possibly to the io).
   attr_reader :max_outbox
-  
+
   MARSHAL_TYPE  = "marshal".freeze
   YAML_TYPE     = "yaml".freeze
   JSON_TYPE     = "json".freeze
   MSGPACK_TYPE  = "msgpack".freeze
-  
+
   TYPES = [
     MARSHAL_TYPE, YAML_TYPE, JSON_TYPE, MSGPACK_TYPE
   ]
@@ -60,23 +60,23 @@ module ObjectStream
         @stream_class_map[type] = cl.call
       end
     end
-    
+
     def register_type type, &bl
       @stream_class_map[type] = bl
     end
   end
-  
+
   def initialize io, max_outbox: DEFAULT_MAX_OUTBOX, **opts
     @io = io
     @max_outbox = max_outbox
     @inbox = nil
     @outbox = []
   end
-  
+
   def to_s
     "#<#{self.class} io=#{io.inspect}>"
   end
-  
+
   # If no block given, behaves just the same as #read_one. If block given,
   # reads any available data and yields it to the block. This form is non-
   # blocking, if supported by the underlying serializer (such as msgpack).
@@ -104,7 +104,7 @@ module ObjectStream
     if @inbox and not @inbox.empty?
       return @inbox.shift
     end
-    
+
     have_result = false
     result = nil
     until have_result
@@ -127,11 +127,11 @@ module ObjectStream
     end
   end
   private :read_from_inbox
-  
+
   # Write the given objects to the stream, first flushing any objects in the
   # outbox. Flushes the underlying byte buffer afterwards.
   def write *objects
-    write_to_buffer *objects
+    write_to_buffer(*objects)
     flush_buffer
   end
   alias << write
@@ -174,7 +174,7 @@ module ObjectStream
     read {|obj| yield obj} until eof
   rescue EOFError
   end
-  
+
   def eof?
     (!@inbox || @inbox.empty?) && io.eof?
   end
@@ -187,62 +187,62 @@ module ObjectStream
     flush_outbox
     io.close
   end
-  
+
   def closed?
     io.closed?
   end
-  
+
   # Makes it possible to use stream in a select.
   def to_io
     io
   end
-  
+
   class MarshalStream
     include ObjectStream
-    
+
     ObjectStream.register_type MARSHAL_TYPE do
       self
     end
-    
+
     def read_from_stream
       yield Marshal.load(io)
     end
-    
+
     def write_to_stream object
       Marshal.dump(object, io)
       self
     end
   end
-  
+
   class YamlStream
     include ObjectStream
-    
+
     ObjectStream.register_type YAML_TYPE do
       require 'yaml'
       self
     end
-    
+
     def read_from_stream
       YAML.load_stream(io) do |obj|
         yield obj
       end
     end
-    
+
     def write_to_stream object
       YAML.dump(object, io)
       self
     end
   end
-  
+
   class JsonStream
     include ObjectStream
-    
+
     ObjectStream.register_type JSON_TYPE do
       require 'yajl'
       require 'yajl/json_gem'
       self
     end
-    
+
     attr_accessor :chunk_size
 
     DEFAULT_CHUNK_SIZE = 2000
@@ -260,7 +260,7 @@ module ObjectStream
       @parser.on_parse_complete = bl
       @parser << io.readpartial(chunk_size)
     end
-    
+
     def write_to_stream object
       @encoder.encode object, io
       self
@@ -269,25 +269,25 @@ module ObjectStream
 
   class MsgpackStream
     include ObjectStream
-    
+
     ObjectStream.register_type MSGPACK_TYPE do
       require 'msgpack'
       self
     end
-    
+
     attr_accessor :chunk_size
     attr_accessor :maxbuf
 
     DEFAULT_CHUNK_SIZE = 2000
     DEFAULT_MAXBUF = 4000
-    
+
     # See the discussion in examples/symbolize-keys.rb.
     def initialize io, chunk_size: DEFAULT_CHUNK_SIZE, maxbuf: DEFAULT_MAXBUF,
           symbolize_keys: false
       super
       @unpacker = MessagePack::Unpacker.new(symbolize_keys: symbolize_keys)
         # don't specify io, so don't have to read all of io in one loop
-      
+
       @packer = MessagePack::Packer.new(io)
       @chunk_size = chunk_size
       @maxbuf = maxbuf
@@ -301,7 +301,7 @@ module ObjectStream
         yield obj
       end
     end
-    
+
     def fill_buffer n
       @unpacker.feed(io.readpartial(n))
     end
@@ -318,12 +318,12 @@ module ObjectStream
           "Exceeded buffer limit by #{@unpacker.buffer.size - maxbuf} bytes."
       end
     end
-    
+
     def write_to_stream object
       @packer.write(object).flush
       self
     end
-    
+
     def write_to_buffer *objects
       flush_outbox
       objects.each do |object|
@@ -331,7 +331,7 @@ module ObjectStream
       end
       self
     end
-    
+
     def flush_buffer
       @packer.flush
       self

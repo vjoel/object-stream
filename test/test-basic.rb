@@ -5,7 +5,7 @@ require 'minitest/autorun'
 
 module TestBasic
   attr_reader :sio, :stream
-  
+
   # supported by all types
   BASIC_OBJECTS = [
     nil,
@@ -24,18 +24,17 @@ module TestBasic
     { ["a"] => 3 },
     { {"b" => 5} => 6 }
   ]
-  
+
   class Custom
     attr_reader :x, :y
     def initialize x, y
       @x, @y = x, y
     end
     def ==(other)
-      @x == other.x
-      @y == other.y # just enough to make test pass
+      @x == other.x && @y == other.y
     end
   end
-  
+
   RUBY_OBJECTS = [
     :foo,
     {:foo => :bar},
@@ -43,15 +42,15 @@ module TestBasic
     File,
     Custom.new(1,2)
   ]
-  
+
   def type; self.class::TYPE; end
   def objects; BASIC_OBJECTS + self.class::OBJECTS; end
-  
+
   def setup
     @sio = StringIO.new
     @stream = ObjectStream.new sio, type: type
   end
-  
+
   def test_write_read
     objects.each do |obj|
       sio.rewind # do not need to clear stream's buffer (if any)
@@ -67,10 +66,10 @@ module TestBasic
       end
     end
   end
-  
+
   def test_batch_write
     a = ["a", "b", "c"]
-    stream.write *a
+    stream.write(*a)
     sio.rewind
     dump = sio.read
     sio.rewind
@@ -81,11 +80,11 @@ module TestBasic
     objects.each do |obj|
       stream.write obj
     end
-  
+
     sio.rewind
     dump = sio.read
     sio.rewind
-    
+
     assert_equal(objects, stream.to_a, # <-- #each called by #to_a
       "dump is #{dump.inspect}")
   end
@@ -95,16 +94,16 @@ module TestBasic
     a.each do |i|
       stream.write [i]
     end
-  
+
     sio.rewind
-    
+
     a2 = []
     stream.each do |object|
       i = object[0]
       a2 << i
       break if i == 5
     end
-    
+
     stream.each do |object|
       i = object[0]
       a2 << i
@@ -128,7 +127,7 @@ module TestBasic
     enum = stream.each
     assert_equal(objects, enum.to_a)
   end
-  
+
   def test_read_without_block
     n = 100
     n.times do |i|

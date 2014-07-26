@@ -6,27 +6,27 @@ require 'minitest/autorun'
 
 class TestSlowSender < Minitest::Test
   attr_reader :s, :t
-  
+
   def setup
     @s, @t = UNIXSocket.pair
   end
-  
+
   def test_marshal
     assert_equal(:block, get_test_result(ObjectStream::MARSHAL_TYPE))
   end
-  
+
   def test_yaml
     assert_equal(:block, get_test_result(ObjectStream::YAML_TYPE))
   end
-  
+
   def test_json
     assert_equal(:noblock, get_test_result(ObjectStream::JSON_TYPE))
   end
-  
+
   def test_msgpack
     assert_equal(:noblock, get_test_result(ObjectStream::MSGPACK_TYPE))
   end
-  
+
   def get_test_result type
     pid = fork do
       sio = StringIO.new
