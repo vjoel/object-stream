@@ -28,5 +28,5 @@ Gem::Specification.new do |s|
 
   s.required_ruby_version = Gem::Requirement.new("~> 2.0")
   s.add_dependency 'msgpack', '~> 1'
-  s.add_dependency 'yajl-ruby', '~> 0'
+  s.add_dependency 'yajl-ruby', '~> 1'
 end
